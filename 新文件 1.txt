@@ -1,0 +1,65 @@
+高標週會需求：
+1. 
+2. For 工廠生產Code，將單顆Hall Sensor異常的Error Type修改成0x13
+
+討論：
+1. 煞車斷動力，頻繁觸發的Stress Test
+2. 在滿油門(有Torque Command下)，按壓後又釋放煞車，MCU在馬達控制上是如何控制。直接開關PWM或是有緩降緩升。
+3. 煞車斷動力的功能，在煞車訊號上，是否有Debounce機制，避免開啟功能後，因煞車訊號不穩定而導致動力斷斷續續。
+
+
+ECO待解：
+1. 
+2. Error List整理提供給外單位 -> PA
+3. 
+4. Speed Limit在ECO上是否需要
+5. Button Type在SMMS上的定義
+6. 3/11 ECO開測，需要確認共版後是否會影響這一階段所驗證的功能 -> 在4/19前需要共版完成（目前待使用成車驗證功能）
+6. SMMS在開測前需要確認已經都更新完畢
+7. R05需要確認各單位測試需求，需要事先設定/燒錄不同版本程式以及參數
+8. Cruise下，持續按壓Trip，如果數值有更新，會停留在該頁面
+9. Smart & Walk 共鍵，接入IO腳
+10. Smart Button切換TN Number
+11. IdleSW Mismatch
+
+
+email 待處理
+1. 
+
+
+詢問：
+1. 	FW-Gavin 	未來5kw儀表是否有方框顯示的Command。
+2. 	FW-Joe 		在Lock Mode下發生電池過溫，BCU是否會在Unlock後通知MCU Error Code。 -> Ans：Lock發生當下不會通知，但MCU上電後BCU會再和BMS確認，如果還是有過溫現象會再次通知MCU
+				F車在電池高溫以及Crawl Home Mode同時都有輸出動力限制，目前ECU的判斷邏輯 -> Ans：當ECU收到 Power Limit 為 250W 強制轉換成 400W
+				並聯系統Discharge Current運算方式調整。 -> Ans：需要與BMS BCU team 一同討論
+				單顆電池MOS Off是否需要調整機制 -> Ans：BCU會先調整當單顆電池MOS Off後，便將此顆電池的Discharger Current Limit設定為0，並與另一顆相加；目前沒有取小乘二的機制。
+				關於Charger In的Error目前檢測機制 -> Ans：因目前與Charger通訊的裝置為BCU，因此機制會太複雜，還是希望依照原案進行
+3. 	PA-Marco	BT Module在2.5kW系統下，是否可以在Unlock下更新Code(尚未實驗)。 -> Ans：已經更新完畢
+4. 	MF-Roger	SMMS上是否有參數設定，以及CAN Command 定義提供。 -> Ans：撰寫生產流程規範，並已經發信通知
+5. 	FW-Team		BCU Scooter生產流程如何確認BCU的Feature Bit -> Speed Limit部分需要確認 -> Ans：需要和MF確認生產流程，BP設定需要在MCU前一步執行完畢
+6. 	PA-Jeff		協助測試Crawl Home Mode下動力 （目前動力限制為250W可能會有動力不足問題） -> Ans：表速大致上為25kph
+7. 	MF-Harris	2.5kW在產線上的成車步驟，是否電池的Feature Bit會在MCU Config之前完成 -> 因有些車種需要設定Speed Limit，在發送CAN Command之前需要確認Battery的Feature Bit
+8.	EE-Jay		MCU DFEMA 針對雙電池車種，當有一顆電池MOS Off，是否需要切換至Tag1.0模式 -> Ans：已取消雙電池車種，單電池MOS Off後切換至Tag1.0機制。
+9. 	PT-Dennis	在車輛生產流程，若是有Main-Stand Sensor，是否要先下CAN Command Disable後再進行測試。 -> Ans：是的，需要先下Command後不下電進入功能測試站進行測試。
+10. PT-George	Trunk Sensor 斷電 MRD -> Ans：在BCU Scooter Behavior文件中
+11. PM-Jocelyn	若0.6G 在測試後無任何更新，停留在92.01.18，需要進版至92.01.22(舉例)，避免日後在FOTA上有系統更新而導致的版本控制的問題。 -> Ans：已說明
+12. PDM-Eric	IO 命名 MRD描述調整 -> Ans：目前不會有其他組合鍵的需求規劃，SMMS預期為下拉式選單設計，命名方式有待確定
+
+
+
+其他待處理事項：
+1. 
+
+
+GDS油門矯正流程優化 -> 在每一個矯正步驟後都先確認MCU讀到的ADC值，並且與SMMS上閾值作比較 -> 才可以有效欄檢異常油門
+
+
+Regen功能默認開啟，透過BT Module在2個模式間切換：
+1. 在放把的時候就依照Charge Current進行Regen -> 未開啟/初始默認
+2. 在按壓煞車的時候，再依照Charge Current進行Regen -> 開啟後執行
+---
+Remark：
+1. 在執行Cruise的時候，不需要根據此設定進行回充限制
+2. 不需要有任何儀表外顯行為進行顯示
+3. APP只能開啟Brake Sync Regen，無法調整Regen強度
+4. Feature Bit Set in Battery.
